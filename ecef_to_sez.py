@@ -26,17 +26,17 @@ E_E    = 0.081819221456
 
 # Helper function for denominator in LLH calculation
 def calc_denom(ecc, lat_rad):
-    return math.sqrt(1.0 - (ecc**2) * (math.sin(lat_rad)**2))
+    return math.sqrt(1.0-(ecc**2)*(math.sin(lat_rad)**2))
 
 # Helper function to convert ECEF to LLH (Latitude, Longitude, HAE)
 def ecef_to_llh(r_x_km, r_y_km, r_z_km):
     # Calculate longitude
     lon_rad = math.atan2(r_y_km, r_x_km)
-    lon_deg = lon_rad * 180.0 / math.pi
+    lon_deg = lon_rad*180.0/math.pi
 
     # Initialize latitude
-    lat_rad = math.asin(r_z_km / math.sqrt(r_x_km**2 + r_y_km**2 + r_z_km**2))
-    r_lon_km = math.sqrt(r_x_km**2 + r_y_km**2)
+    lat_rad = math.asin(r_z_km/math.sqrt(r_x_km**2+r_y_km**2+r_z_km**2))
+    r_lon_km = math.sqrt(r_x_km**2+r_y_km**2)
     prev_lat_rad = float('nan')
 
     # Iteratively find latitude
@@ -44,13 +44,13 @@ def ecef_to_llh(r_x_km, r_y_km, r_z_km):
     c_E = float('nan')
     while math.isnan(prev_lat_rad) or abs(lat_rad - prev_lat_rad) > 1e-7:
         denom = calc_denom(E_E, lat_rad)
-        c_E = R_E_KM / denom
+        c_E = R_E_KM/denom
         prev_lat_rad = lat_rad
-        lat_rad = math.atan((r_z_km + c_E * (E_E**2) * math.sin(lat_rad)) / r_lon_km)
+        lat_rad = math.atan((r_z_km+c_E*(E_E**2)*math.sin(lat_rad))/r_lon_km)
         count += 1
     
     # Calculate height above ellipsoid (HAE)
-    hae_km = r_lon_km / math.cos(lat_rad) - c_E
+    hae_km = r_lon_km/math.cos(lat_rad)-c_E
     
     # Return latitude (radians), longitude (radians), and height (km)
     return lat_rad, lon_rad, hae_km
@@ -61,9 +61,9 @@ def ecef_to_sez(o_x_km, o_y_km, o_z_km, x_km, y_km, z_km):
     lat_o_rad, lon_o_rad, _ = ecef_to_llh(o_x_km, o_y_km, o_z_km)
 
     # Compute differences in ECEF coordinates
-    dx = x_km - o_x_km
-    dy = y_km - o_y_km
-    dz = z_km - o_z_km
+    dx = x_km-o_x_km
+    dy = y_km-o_y_km
+    dz = z_km-o_z_km
 
     # Rotation matrix to convert from ECEF to SEZ
     sin_lat_o = math.sin(lat_o_rad)
@@ -72,9 +72,9 @@ def ecef_to_sez(o_x_km, o_y_km, o_z_km, x_km, y_km, z_km):
     cos_lon_o = math.cos(lon_o_rad)
 
     # Apply the rotation matrix to get SEZ coordinates
-    s_km = -dz * cos_lat_o + dx * cos_lon_o * sin_lat_o + dy * sin_lat_o * sin_lon_o
-    e_km = dy * cos_lon_o - dx * sin_lon_o
-    z_km = dx * cos_lat_o * cos_lon_o + dz * sin_lat_o + dy * cos_lat_o * sin_lon_o
+    s_km =-dz*cos_lat_o+dx*cos_lon_o*sin_lat_o+dy*sin_lat_o*sin_lon_o
+    e_km = dy*cos_lon_o-dx*sin_lon_o
+    z_km = dx*cos_lat_o*cos_lon_o+dz*sin_lat_o+dy*cos_lat_o*sin_lon_o
 
     return s_km, e_km, z_km
 
